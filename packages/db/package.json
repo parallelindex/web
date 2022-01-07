@@ -1,0 +1,10 @@
+{
+  "name": "db",
+  "version": "1.0.0",
+  "main": "prisma.ts",
+  "types": "prisma.ts",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@prisma/client": "^3.6.0"
+  }
+}

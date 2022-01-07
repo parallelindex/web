@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model category {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  uuid        String    @unique @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  description String?
+  image       String?
+  name        String
+  company     company[]
+}
+
+model company {
+  id           Int       @id @default(autoincrement())
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  uuid         String    @unique @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  categoryId   Int       @map("category_id")
+  description  String
+  email        String?
+  gab          String?
+  images       String[]
+  logo         String
+  name         String
+  phone        String?
+  publishState String    @default("UNPUBLISHED") @map("publish_state")
+  notes        String?
+  userId       Int       @map("user_id")
+  website      String?
+  category     category  @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user         user      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  uuid      String    @unique @db.Uuid
+  firstName String?   @map("first_name")
+  lastName  String?   @map("last_name")
+  company   company[]
+}

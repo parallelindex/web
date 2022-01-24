@@ -30,16 +30,63 @@ handler.get(async (req, res) => {
         phone: true,
         uuid: true,
         website: true,
+        categoryId: true,
+        notes: true
       },
       where: {
         AND: [
           { uuid: { equals: String(uuid) } },
-          { publishState: { equals: 'PUBLISHED' } },
+          //{ publishState: { equals: 'PUBLISHED' } },
         ],
       },
     });
 
     res.status(200).json(companyData);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+handler.put(async (req, res) => {
+  const {
+    query: { uuid },
+  } = req;
+  
+  try {
+    const {
+      body: {
+        categoryId,
+        description,
+        email,
+        gab,
+        images,
+        logo,
+        name,
+        notes,
+        phone,
+        userId,
+        website,
+      },
+    } = req;
+
+    const updatedCompany = await prisma.company.update({
+      data: {
+        categoryId,
+        description,
+        email,
+        gab,
+        images,
+        logo,
+        name,
+        notes,
+        phone,
+        userId,
+        website,
+      },
+      where: { uuid: String(uuid) }
+    });
+
+    res.status(200).json(updatedCompany);
   } catch (error) {
     res.status(500).send(error);
   }

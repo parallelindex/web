@@ -31,7 +31,7 @@ import {
 
 import { Button } from '../../../components';
 import { useUser } from '../../../hooks';
-import { createCompany, getAllCategories, uploadImages } from '../../../lib';
+import { createCompany, getAllCategories, updateCompany, uploadImages } from '../../../lib';
 
 import removeImage from './removeImage';
 import {
@@ -43,9 +43,14 @@ import {
 } from './stitch';
 import { Heading, Icon } from '../stitch';
 import { SubmitProps } from './types';
+import { Company } from 'types';
 import validation from './validation';
 
-export default function Submit() {
+export default function Submit({
+  company
+}: { 
+  company? :Company & Partial<{ categoryId: number; notes: string }>
+}) {
   const [categories, setCategories] = useState([]);
   const [isCategoryLoading, setIsCategoryLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -179,17 +184,18 @@ export default function Submit() {
 
   return (
     <Formik
+      enableReinitialize={true}
       initialValues={{
         logo: [],
-        name: '',
-        description: '',
-        category: 0,
+        name: company?.name ?? '',
+        description: company?.description ?? '',
+        category: company?.categoryId ?? 0,
         images: [],
-        website: '',
-        gab: '',
-        email: '',
-        phone: '',
-        notes: '',
+        website: company?.website ?? '',
+        gab: company?.gab ?? '',
+        email: company?.email ?? '',
+        phone: company?.phone ?? '',
+        notes: company?.notes ?? '',
       }}
       validationSchema={validation(logoFile, imageFiles)}
       onSubmit={async (values: SubmitProps, { setSubmitting }) => {
@@ -210,32 +216,50 @@ export default function Submit() {
         const imageFilesNames = imageFiles.map((image) => uuidv4());
 
         try {
-          await createCompany({
-            categoryId: Number(category),
-            description,
-            email,
-            gab,
-            imageFilesNames,
-            logoFileName,
-            name,
-            notes,
-            phone: phone.replace(/\D/g, ''),
-            userId: Number(userData.id),
-            website,
-          }).then((company) => {
-            uploadImages({
-              bucket: 'companies',
-              path: `${company.uuid}/logo`,
-              files: [logoFile],
-              names: [logoFileName],
+          if(company){
+            await updateCompany({
+              uuid: company.uuid,
+              categoryId: Number(category),
+              description,
+              email,
+              gab,
+              imageFilesNames,
+              logoFileName,
+              name,
+              notes,
+              phone: phone.replace(/\D/g, ''),
+              userId: Number(userData.id),
+              website,
+            })
+          }
+          else{
+            await createCompany({
+              categoryId: Number(category),
+              description,
+              email,
+              gab,
+              imageFilesNames,
+              logoFileName,
+              name,
+              notes,
+              phone: phone.replace(/\D/g, ''),
+              userId: Number(userData.id),
+              website,
+            }).then((company) => {
+              uploadImages({
+                bucket: 'companies',
+                path: `${company.uuid}/logo`,
+                files: [logoFile],
+                names: [logoFileName],
+              });
+              uploadImages({
+                bucket: 'companies',
+                path: `${company.uuid}/images`,
+                files: imageFiles,
+                names: imageFilesNames,
+              });
             });
-            uploadImages({
-              bucket: 'companies',
-              path: `${company.uuid}/images`,
-              files: imageFiles,
-              names: imageFilesNames,
-            });
-          });
+          }
         } catch (error) {
           console.error('Error submitting form:', error.message);
 
@@ -465,3 +489,5 @@ function DescriptionHelp({ length }: { length: number }) {
 
   return <span />;
 }
+
+

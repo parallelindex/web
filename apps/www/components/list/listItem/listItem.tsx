@@ -16,9 +16,11 @@ export function ListItem({
   name,
   noLink = false,
   uuid,
+  canEdit = false
 }: Company & {
   inlineStyles?: boolean;
   noLink?: boolean;
+  canEdit?: boolean;
 }) {
   const [logoUrl, setLogoUrl] = useState();
 
@@ -34,7 +36,7 @@ export function ListItem({
   return (
     <li>
       <ListItemLink
-        href={`/company/${uuid}`}
+        href={`/${ canEdit ? 'submit' : 'company'}/${uuid}`}
         inlineStyles={inlineStyles}
         noLink={noLink}
       >

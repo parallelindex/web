@@ -40,26 +40,6 @@ export default function Account({}) {
     }
   }, [uuid]);
 
-  useEffect(() => {
-    if (uuid && company && company.images)
-      company.images.map((image: string) => {
-        getImageUrl({
-          bucket: 'companies',
-          path: `${uuid}/images/${image}`,
-          setUrl: addImage,
-        });
-      });
-  }, [company, uuid]);
-
-  useEffect(() => {
-    if (uuid && company && company.logo)
-      getImageUrl({
-        bucket: 'companies',
-        path: `${uuid}/logo/${company.logo}`,
-        setUrl: setLogoUrl,
-      });
-  }, [uuid, company]);
-
   if (!user)
     return (
       <Layout>

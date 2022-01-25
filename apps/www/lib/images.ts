@@ -46,7 +46,7 @@ export async function uploadImages({
         .from(bucket)
         .upload(`${path}/${names[index]}`, compressedFile, {
           cacheControl: '3600',
-          upsert: false,
+          upsert: true,
         });
 
       return data;

@@ -108,10 +108,11 @@ function SortedCompanies({
             images={images}
             logo={logo}
             name={name}
-            noLink={publishState === 'PUBLISHED' ? false : true}
+            noLink={false}
             uuid={uuid}
             website={website}
             inlineStyles
+            canEdit={true}
           />
         );
       }

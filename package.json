@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "prettier": "^2.5.1",
-    "prisma": "^3.6.0",
+    "prisma": "^3.8.0",
     "turbo": "latest"
   },
   "turbo": {
@@ -36,5 +36,8 @@
         "cache": false
       }
     }
+  },
+  "dependencies": {
+    "@prisma/client": "^3.8.0"
   }
 }

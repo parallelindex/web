@@ -73,7 +73,7 @@ export function Search({ dataset }: { dataset?: [Company] }) {
   }
 
   useEffect(() => {
-    if (dataset && dataset.length > 0) {
+    if (dataset) {
       dispatch({ type: 'SET_DATA', payload: dataset });
       const dataToSearch = buildIndex(dataset);
       dataToSearch && dispatch({ type: 'SET_SEARCH', payload: dataToSearch });

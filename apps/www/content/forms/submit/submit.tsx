@@ -31,7 +31,7 @@ import {
 
 import { Button } from '../../../components';
 import { useUser } from '../../../hooks';
-import { createCompany, getAllCategories, uploadImages } from '../../../lib';
+import { createCompany, getAllCategories, updateCompany, uploadImages, getImageUrl } from '../../../lib';
 
 import removeImage from './removeImage';
 import {
@@ -43,9 +43,14 @@ import {
 } from './stitch';
 import { Heading, Icon } from '../stitch';
 import { SubmitProps } from './types';
+import { Company } from 'types';
 import validation from './validation';
 
-export default function Submit() {
+export default function Submit({
+  company
+}: { 
+  company? :Company & Partial<{ categoryId: number; notes: string }>
+}) {
   const [categories, setCategories] = useState([]);
   const [isCategoryLoading, setIsCategoryLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -142,6 +147,52 @@ export default function Submit() {
       });
   }, []);
 
+  useEffect(() => {
+    if (company && company.images){
+      const files = [];
+      
+      company.images.map((image: string) => {
+        const urlToFile = (url: string) => {
+           
+          const file = {
+            name: image,
+            preview: url
+          };
+
+          files.push(file);
+        };
+
+        getImageUrl({
+          bucket: 'companies',
+          path: `${company.uuid}/images/${image}`,
+          setUrl: urlToFile,
+        });
+      });
+
+      setImageFiles(files);
+    }
+  }, [company]);
+
+  useEffect(() => {
+    if (company && company.logo){
+      const urlToFile = (url: string) => {
+      
+        const file = {
+          name: company.logo,
+          preview: url
+        };
+
+      setLogoFile(file);
+    }
+
+      getImageUrl({
+        bucket: 'companies',
+        path: `${company.uuid}/logo/${company.logo}`,
+        setUrl: urlToFile
+      });
+    }
+  }, [company]);
+
   if (isUserError) return <div />;
   if (isUserLoading) return <div />;
 
@@ -179,17 +230,18 @@ export default function Submit() {
 
   return (
     <Formik
+      enableReinitialize={true}
       initialValues={{
         logo: [],
-        name: '',
-        description: '',
-        category: 0,
+        name: company?.name ?? '',
+        description: company?.description ?? '',
+        category: company?.categoryId ?? 0,
         images: [],
-        website: '',
-        gab: '',
-        email: '',
-        phone: '',
-        notes: '',
+        website: company?.website ?? '',
+        gab: company?.gab ?? '',
+        email: company?.email ?? '',
+        phone: company?.phone ?? '',
+        notes: company?.notes ?? '',
       }}
       validationSchema={validation(logoFile, imageFiles)}
       onSubmit={async (values: SubmitProps, { setSubmitting }) => {
@@ -206,36 +258,51 @@ export default function Submit() {
           website,
         } = values;
 
-        const logoFileName = uuidv4();
-        const imageFilesNames = imageFiles.map((image) => uuidv4());
+        const logoFileName = logoFile.name ?? uuidv4();
+        const imageFilesNames = imageFiles.map((image) =>  image.name ?? uuidv4());
 
         try {
-          await createCompany({
-            categoryId: Number(category),
-            description,
-            email,
-            gab,
-            imageFilesNames,
-            logoFileName,
-            name,
-            notes,
-            phone: phone.replace(/\D/g, ''),
-            userId: Number(userData.id),
-            website,
-          }).then((company) => {
-            uploadImages({
-              bucket: 'companies',
-              path: `${company.uuid}/logo`,
-              files: [logoFile],
-              names: [logoFileName],
+          // Upload errors (but still works somehow) if image is not an instance of File
+          setLogoFile(await getFileFromImage(logoFile, logoFileName));
+          setImageFiles(await Promise.all(imageFiles.map(async (image, idx) => {
+            return await getFileFromImage(image, imageFilesNames[idx])
+          })))
+
+          if(company){
+            await updateCompany({
+              uuid: company.uuid,
+              categoryId: Number(category),
+              description,
+              email,
+              gab,
+              imageFilesNames,
+              logoFileName,
+              name,
+              notes,
+              phone: phone.replace(/\D/g, ''),
+              userId: Number(userData.id),
+              website,
+            }).then((company) => {
+              saveImages(company, logoFile, logoFileName, imageFiles, imageFilesNames);
             });
-            uploadImages({
-              bucket: 'companies',
-              path: `${company.uuid}/images`,
-              files: imageFiles,
-              names: imageFilesNames,
+          }
+          else{
+            await createCompany({
+              categoryId: Number(category),
+              description,
+              email,
+              gab,
+              imageFilesNames,
+              logoFileName,
+              name,
+              notes,
+              phone: phone.replace(/\D/g, ''),
+              userId: Number(userData.id),
+              website,
+            }).then((company) => {
+              saveImages(company, logoFile, logoFileName, imageFiles, imageFilesNames);
             });
-          });
+          }
         } catch (error) {
           console.error('Error submitting form:', error.message);
 
@@ -458,6 +525,37 @@ export default function Submit() {
   );
 }
 
+function saveImages(company:Company, logoFile: File, logoFileName: string, imageFiles: File[], imageFileNames: string[]){
+  uploadImages({
+    bucket: 'companies',
+    path: `${company.uuid}/logo`,
+    files: [logoFile],
+    names: [logoFileName],
+  });
+  uploadImages({
+    bucket: 'companies',
+    path: `${company.uuid}/images`,
+    files: imageFiles,
+    names: imageFileNames,
+  });
+}
+
+async function getFileFromImage(image: { preview : string }, name: string){
+    if (image instanceof File) {
+      return image;
+    }
+  
+    return await getFileFromUrl(image.preview, name);
+}
+
+async function getFileFromUrl(url, name, defaultType = 'image/jpeg'){
+  const response = await fetch(url);
+  const data = await response.blob();
+  return new File([data], name, {
+    type: data.type || defaultType,
+  });
+}
+
 function DescriptionHelp({ length }: { length: number }) {
   if (length > 512 - 32 && length <= 512) return <span>{length}/512</span>;
 
@@ -465,3 +563,5 @@ function DescriptionHelp({ length }: { length: number }) {
 
   return <span />;
 }
+
+

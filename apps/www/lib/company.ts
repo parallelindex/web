@@ -108,6 +108,40 @@ export async function updateCompany({
   }
 }
 
+export async function deleteCompany({
+  uuid
+}: {
+  uuid: string
+}) {
+  try {
+    const response = await fetch(`/api/company/${uuid}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.error('Error updating company:', error.message);
+  }
+}
+
+export async function softDeleteCompany({
+  uuid
+}: {
+  uuid: string
+}) {
+  try {
+    const response = await fetch(`/api/company/${uuid}/soft`, {
+      method: 'DELETE'
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('Error updating company:', error.message);
+  }
+}
+
 export async function getAllCompanies() {
   try {
     const allCompanies = await fetch(`/api/company`, {

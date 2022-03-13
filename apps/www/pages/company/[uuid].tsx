@@ -58,8 +58,8 @@ export default function Company() {
   }
 
   useEffect(() => {
-    setIsLoading(true);
-    getCompany(String(uuid))
+      setIsLoading(true);
+      getCompany(String(uuid))
       .then((response) => response)
       .then((data) => {
         setCompany(data);

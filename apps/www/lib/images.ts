@@ -55,3 +55,27 @@ export async function uploadImages({
     console.error('Error uploading images:', error.message);
   }
 }
+
+export async function deleteImages({
+  bucket,
+  path,
+  names,
+}: {
+  bucket: string;
+  path: string;
+  names: string[];
+}) {
+  try {
+
+    const paths = names.map(name => `${path}/${name}`);
+
+    const { data, error } = await supabase.storage
+        .from(bucket)
+        .remove(paths)
+
+      return data;
+      
+  } catch (error) {
+    console.error('Error uploading images:', error.message);
+  }
+}

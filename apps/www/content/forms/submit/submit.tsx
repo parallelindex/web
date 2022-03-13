@@ -31,7 +31,7 @@ import {
 
 import { Button } from '../../../components';
 import { useUser } from '../../../hooks';
-import { createCompany, getAllCategories, updateCompany, uploadImages, getImageUrl } from '../../../lib';
+import { createCompany, getAllCategories, updateCompany, uploadImages, getImageUrl, softDeleteCompany } from '../../../lib';
 
 import removeImage from './removeImage';
 import {
@@ -91,6 +91,7 @@ export default function Submit({
         onRejected({ fileRejections, setErrors: setLogoErrors });
       },
       onFileDialogCancel: () => 'void',
+      
     });
 
   const { getRootProps: getImageRootProps, getInputProps: getImageInputProps } =
@@ -149,40 +150,40 @@ export default function Submit({
 
   useEffect(() => {
     if (company && company.images){
-      const files = [];
-      
-      company.images.map((image: string) => {
-        const urlToFile = (url: string) => {
-           
-          const file = {
-            name: image,
-            preview: url
-          };
+      const images = [];
 
-          files.push(file);
-        };
+      company.images.map((imageName: string) => {
+        const urlToFile = (url: string) => {
+          
+         const image = {
+           name: imageName,
+           preview: url
+         };
+         images.push(image);
+       };
 
         getImageUrl({
           bucket: 'companies',
-          path: `${company.uuid}/images/${image}`,
+          path: `${company.uuid}/images/${imageName}`,
           setUrl: urlToFile,
         });
       });
 
-      setImageFiles(files);
+      setImageFiles(images);
     }
+
   }, [company]);
 
   useEffect(() => {
     if (company && company.logo){
       const urlToFile = (url: string) => {
       
-        const file = {
+        const image = {
           name: company.logo,
           preview: url
         };
 
-      setLogoFile(file);
+      setLogoFile(image);
     }
 
       getImageUrl({
@@ -262,12 +263,13 @@ export default function Submit({
         const imageFilesNames = imageFiles.map((image) =>  image.name ?? uuidv4());
 
         try {
-          // Upload errors (but still works somehow) if image is not an instance of File
-          setLogoFile(await getFileFromImage(logoFile, logoFileName));
-          setImageFiles(await Promise.all(imageFiles.map(async (image, idx) => {
+          
+          // Making sure all of our image objects are Files; converting them if not
+          const logoToUpload  = await getFileFromImage(logoFile, logoFileName);
+          const imagesToUpload = await Promise.all(imageFiles.map(async (image, idx) => {
             return await getFileFromImage(image, imageFilesNames[idx])
-          })))
-
+          }));
+          
           if(company){
             await updateCompany({
               uuid: company.uuid,
@@ -283,7 +285,7 @@ export default function Submit({
               userId: Number(userData.id),
               website,
             }).then((company) => {
-              saveImages(company, logoFile, logoFileName, imageFiles, imageFilesNames);
+              saveImages(company, logoToUpload, logoFileName, imagesToUpload, imageFilesNames);
             });
           }
           else{
@@ -300,7 +302,7 @@ export default function Submit({
               userId: Number(userData.id),
               website,
             }).then((company) => {
-              saveImages(company, logoFile, logoFileName, imageFiles, imageFilesNames);
+              saveImages(company, logoToUpload, logoFileName, imagesToUpload, imageFilesNames);
             });
           }
         } catch (error) {
@@ -331,7 +333,7 @@ export default function Submit({
                 }}
               >
                 <div className={LogoInputCSS()} {...getLogoRootProps()}>
-                  <input
+                  <input 
                     name="logo"
                     {...formik.getFieldProps('logo')}
                     {...getLogoInputProps()}
@@ -519,6 +521,9 @@ export default function Submit({
           <Button disabled={formik.isSubmitting} type="submit" full>
             Submit
           </Button>
+          <Button disabled={formik.isSubmitting} onClick={async (e) =>  { e.preventDefault(); await removeCompany(company.uuid) }} full>
+            Remove
+          </Button>
         </Form>
       )}
     </Formik>
@@ -541,18 +546,23 @@ function saveImages(company:Company, logoFile: File, logoFileName: string, image
 }
 
 async function getFileFromImage(image: { preview : string }, name: string){
-    if (image instanceof File) {
-      return image;
-    }
-  
-    return await getFileFromUrl(image.preview, name);
+   
+  if (image instanceof File) { 
+    return image;
+  }
+    
+  return await getFileFromUrl(image.preview, name);
 }
 
-async function getFileFromUrl(url, name, defaultType = 'image/jpeg'){
+async function getFileFromUrl(url, name, defaultType = 'image/jpeg'): Promise<File & {preview: string}> {
   const response = await fetch(url);
   const data = await response.blob();
-  return new File([data], name, {
+  var file =  new File([data], name, {
     type: data.type || defaultType,
+  });
+  
+  return Object.assign(file, {
+    preview: url,
   });
 }
 
@@ -562,6 +572,12 @@ function DescriptionHelp({ length }: { length: number }) {
   if (length > 512) return <WarningText>{length}/512</WarningText>;
 
   return <span />;
+}
+
+async function removeCompany(uuid: string){
+  await softDeleteCompany({ uuid }).then(() => {
+    history.back();
+  });
 }
 
 

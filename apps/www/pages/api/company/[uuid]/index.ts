@@ -92,4 +92,20 @@ handler.put(async (req, res) => {
   }
 });
 
+handler.delete(async (req, res) => {
+  const {
+    query: { uuid },
+  } = req;
+
+  try {
+    await prisma.company.delete({
+      where: { uuid: String(uuid) }
+    });
+
+    res.status(200).end();
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
 export default handler;

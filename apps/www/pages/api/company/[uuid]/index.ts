@@ -82,6 +82,7 @@ handler.put(async (req, res) => {
         phone,
         userId,
         website,
+        publishState: 'PENDING'
       },
       where: { uuid: String(uuid) }
     });

@@ -140,7 +140,7 @@ function Companies({ userId }: { userId: number }) {
 
         {companies.some((company) => company.publishState === 'PUBLISHED') && (
           <>
-            <h3>Live</h3>
+            <h3>Active</h3>
             <ListStitch single>
               <SortedCompanies companies={companies} publishState="PUBLISHED" />
             </ListStitch>

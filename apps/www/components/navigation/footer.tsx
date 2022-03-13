@@ -30,12 +30,12 @@ export function Footer() {
             <Image alt="Gab" height={24} src="/images/gab.svg" width={40} />
           </a>
         </li>
-        <li>
+        {/* <li>
           <a href={meta.links.github} rel="noreferrer" target="_blank">
             <GitHub />
             <VisuallyHidden.Root>GitHub</VisuallyHidden.Root>
           </a>
-        </li>
+        </li> */}
       </Links>
     </FooterStitch>
   );

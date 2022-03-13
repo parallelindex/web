@@ -212,14 +212,15 @@ export default function Submit({
       </Card>
     );
 
-  if (isSubmitted)
+  if (isSubmitted) {
+    const title = company ? 'update' : 'submission';
     return (
       <Card className={FormCSS()}>
         <IoCheckmarkCircle className={Icon({ variant: 'success' })} />
-        <Heading>Your submission was successful!</Heading>
+        <Heading>Your {title} was successful!</Heading>
         <p>
-          We&apos;ll review your submission within the next 48 hours so your
-          business can be listed! You can check the progress of your submission
+          We&apos;ll review your {title} within the next 48 hours so your
+          business can be listed! You can check the progress of your {title + ' '}  
           on your{' '}
           <Link href="/account">
             <a>account</a>
@@ -228,6 +229,7 @@ export default function Submit({
         </p>
       </Card>
     );
+  }
 
   return (
     <Formik
@@ -519,7 +521,9 @@ export default function Submit({
           />
 
           <Button disabled={formik.isSubmitting} type="submit" full>
-            Submit
+            {
+              company ? 'Save' : 'Submit'
+            }
           </Button>
           <Button disabled={formik.isSubmitting} onClick={async (e) =>  { e.preventDefault(); await removeCompany(company.uuid) }} full>
             Remove

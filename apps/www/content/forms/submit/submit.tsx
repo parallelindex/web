@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { Formik, Form } from 'formik';
+import { Formik, Form, FormikProps } from 'formik';
 import { v4 as uuidv4 } from 'uuid';
 import { useDropzone } from 'react-dropzone';
 import {
@@ -10,6 +10,7 @@ import {
   IoImages,
   IoRemove,
   IoStorefront,
+  IoWarningOutline,
 } from 'react-icons/io5';
 
 import { useAuth } from 'auth';
@@ -53,12 +54,15 @@ export default function Submit({
 }) {
   const [categories, setCategories] = useState([]);
   const [isCategoryLoading, setIsCategoryLoading] = useState(false);
+  const [needsApproval, setNeedsApproval] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isError, setIsError] = useState(false);
   const [logoFile, setLogoFile] = useState(null);
   const [imageFiles, setImageFiles] = useState([]);
   const [logoErrors, setLogoErrors] = useState([]);
   const [imageErrors, setImageErrors] = useState([]);
+
+  const formRef = useRef<FormikProps<any>>();
 
   const onRejected = ({ fileRejections, setErrors }) => {
     const errors = [
@@ -232,7 +236,9 @@ export default function Submit({
   }
 
   return (
+    <>
     <Formik
+      innerRef={formRef}
       enableReinitialize={true}
       initialValues={{
         logo: [],
@@ -249,7 +255,7 @@ export default function Submit({
       validationSchema={validation(logoFile, imageFiles)}
       onSubmit={async (values: SubmitProps, { setSubmitting }) => {
         setSubmitting(true);
-
+        
         const {
           category,
           description,
@@ -320,7 +326,7 @@ export default function Submit({
       }}
     >
       {(formik) => (
-        <Form className={`${CardCSS()} ${FormCSS()}`}>
+        <Form className={`${CardCSS()} ${FormCSS()}`} style={ needsApproval ? {display: 'none'} : {}}>
           <h2>Submit your business</h2>
 
           <div>
@@ -520,17 +526,38 @@ export default function Submit({
             placeholder="Anything else you'd like to let us know? (ex. if your category wasn't available)"
           />
 
-          <Button disabled={formik.isSubmitting} type="submit" full>
+          <Button disabled={formik.isSubmitting} type="submit" onClick={(e) => { if(company)  { e.preventDefault(); formik.isSubmitting = true; setNeedsApproval(true); }}} full>
             {
               company ? 'Save' : 'Submit'
             }
           </Button>
-          <Button disabled={formik.isSubmitting} onClick={async (e) =>  { e.preventDefault(); await removeCompany(company.uuid) }} full>
+          <Button disabled={formik.isSubmitting} onClick={async (e) =>  { e.preventDefault(); setNeedsApproval(true);  }} full>
             Remove
           </Button>
         </Form>
       )}
     </Formik>
+    <Card className={FormCSS()} style={ needsApproval ? {} : {display : 'none'}}>
+      <IoWarningOutline className={Icon({ variant: 'warning' })} />
+    
+      <p>
+        {formRef.current?.isSubmitting === true ?  'Your listing will be temporarily deactivated while we review your changes.'
+          : 'Your listing will be removed.'
+         }
+        <br/>
+        Would you like to continue?
+      </p>
+      { formRef.current?.isSubmitting && <Button onClick={async (e) =>  { console.log(formRef); formRef.current.handleSubmit() }} full>
+        Continue
+      </Button> }
+      { !formRef.current?.isSubmitting && <Button onClick={async (e) =>  { console.log(formRef); await removeCompany(company.uuid); }} full>
+        Continue
+      </Button> }
+      <Button onClick={(e) =>  { if (formRef.current) {formRef.current.isSubmitting = false; } setNeedsApproval(false);}} full>
+        Cancel
+      </Button>
+  </Card>
+  </>
   );
 }
 

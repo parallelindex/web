@@ -9,6 +9,9 @@ export const Icon = css({
       success: {
         color: '$green',
       },
+      warning: {
+        color: '$yellow',
+      },
       error: {
         color: '$red',
       },

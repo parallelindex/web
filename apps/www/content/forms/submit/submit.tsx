@@ -244,7 +244,7 @@ export default function Submit({
         logo: [],
         name: company?.name ?? '',
         description: company?.description ?? '',
-        category: company?.categoryId ?? 0,
+        category: company?.categoryId ?? 1,
         images: [],
         website: company?.website ?? '',
         gab: company?.gab ?? '',
@@ -547,10 +547,10 @@ export default function Submit({
         <br/>
         Would you like to continue?
       </p>
-      { formRef.current?.isSubmitting && <Button onClick={async (e) =>  { console.log(formRef); formRef.current.handleSubmit() }} full>
+      { formRef.current?.isSubmitting && <Button onClick={async (e) =>  { formRef.current.handleSubmit() }} full>
         Continue
       </Button> }
-      { !formRef.current?.isSubmitting && <Button onClick={async (e) =>  { console.log(formRef); await removeCompany(company.uuid); }} full>
+      { !formRef.current?.isSubmitting && <Button onClick={async (e) =>  { await removeCompany(company.uuid); }} full>
         Continue
       </Button> }
       <Button onClick={(e) =>  { if (formRef.current) {formRef.current.isSubmitting = false; } setNeedsApproval(false);}} full>

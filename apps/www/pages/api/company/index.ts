@@ -51,7 +51,7 @@ handler.post(async (req, res) => {
         website,
       },
     } = req;
-
+    
     const newCompany = await prisma.company.create({
       data: {
         categoryId,
@@ -71,7 +71,7 @@ handler.post(async (req, res) => {
 
     res.status(201).json(newCompany);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).send(JSON.stringify(error, Object.getOwnPropertyNames(error)));
   }
 });
 

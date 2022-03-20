@@ -24,7 +24,7 @@ export async function createCompany({
   website: string;
 }) {
   try {
-    const newCompany = await fetch(`/api/company`, {
+    const createResponse = await fetch(`/api/company`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -44,11 +44,19 @@ export async function createCompany({
       }),
     });
 
-    const data = await newCompany.json();
+    if (!createResponse.ok){
+      const error: Error = await createResponse.json();
+      error.message = 'Status ' + createResponse.status + '; ' + error.message;
+      
+      throw error;
+    }
+
+    const data = await createResponse.json();
 
     return data;
   } catch (error) {
     console.error('Error creating company:', error.message);
+    throw error;
   }
 }
 
@@ -80,7 +88,7 @@ export async function updateCompany({
   website: string;
 }) {
   try {
-    const updatedCompany = await fetch(`/api/company/${uuid}`, {
+    const updateResponse = await fetch(`/api/company/${uuid}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -100,11 +108,19 @@ export async function updateCompany({
       }),
     });
 
-    const data = await updatedCompany.json();
+    if (!updateResponse.ok){
+      const error: Error = await updateResponse.json();
+      error.message = 'Status ' + updateResponse.status + '; ' + error.message;
+      
+      throw error;
+    }
+
+    const data = await updateResponse.json();
 
     return data;
   } catch (error) {
-    console.error('Error updating company:', error.message);
+    console.error( 'Error updating company:', error.message);
+    throw error;
   }
 }
 
@@ -124,6 +140,7 @@ export async function deleteCompany({
     return response.ok;
   } catch (error) {
     console.error('Error updating company:', error.message);
+    throw error;
   }
 }
 
@@ -139,6 +156,7 @@ export async function softDeleteCompany({
     return response.ok;
   } catch (error) {
     console.error('Error updating company:', error.message);
+    throw error;
   }
 }
 
@@ -156,6 +174,7 @@ export async function getAllCompanies() {
     return data;
   } catch (error) {
     console.error('Error getting all companies:', error.message);
+    throw error;
   }
 }
 
@@ -172,6 +191,7 @@ export async function getCompany(uuid: string) {
     return data;
   } catch (error) {
     console.error('Error getting company:', error.message);
+    throw error;
   }
 }
 
